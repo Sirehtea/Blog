@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Personal Blog & Video Platform</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 5px solid #0056b3;
+        }
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        article, .video-container {
+            background: #fff;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #007bff;
+            color: #fff;
+            margin-top: 2rem;
+        }
+        a {
+            color: #ffdd57;
+            text-decoration: none;
+        }
+        form {
+            background: #fff;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        video {
+            width: 100%;
+            height: auto;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to My Personal Blog & Video Platform</h1>
+        <p>Sharing my thoughts, stories, ideas, and videos with the world.</p>
+    </header>
+
+    <main>
+        <form id="postForm">
+            <h2>Create a New Post</h2>
+            <input type="text" id="postTitle" placeholder="Post Title" required>
+            <textarea id="postContent" rows="5" placeholder="Write your post here..." required></textarea>
+            <button type="button" onclick="addPost()">Post</button>
+        </form>
+
+        <form id="videoForm" enctype="multipart/form-data">
+            <h2>Upload a New Video</h2>
+            <input type="text" id="videoTitle" placeholder="Video Title" required>
+            <input type="file" id="videoFile" accept="video/*" required>
+            <button type="button" onclick="uploadVideo()">Upload Video</button>
+        </form>
+
+        <article>
+            <h2>First Blog Post</h2>
+            <p>Welcome to my blog! This is where I share my thoughts, projects, and random musings. Stay tuned for more content as I continue to update this space!</p>
+        </article>
+
+        <article>
+            <h2>Another Day, Another Post</h2>
+            <p>Today, I learned something really interesting. It's amazing how small moments can shape our understanding of the world. I'll be diving deeper into this topic soon. Keep reading!</p>
+        </article>
+
+        <div class="video-container" id="videoContainer">
+            <h2>Uploaded Videos</h2>
+        </div>
+    </main>
+
+    <div class="footer">
+        <p>&copy; 2024 My Personal Blog | <a href="#">Contact Me</a></p>
+    </div>
+    <script>
+        function addPost() {
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+
+            if (title && content) {
+                const main = document.querySelector('main');
+                const newArticle = document.createElement('article');
+                newArticle.innerHTML = `
+                    <h2>${title}</h2>
+                    <p>${content}</p>
+                `;
+                main.appendChild(newArticle);
+
+                document.getElementById('postTitle').value = '';
+                document.getElementById('postContent').value = '';
+            } else {
+                alert('Please fill in both the title and content fields.');
+            }
+        }
+
+        async function uploadVideo() {
+            const title = document.getElementById('videoTitle').value;
+            const fileInput = document.getElementById('videoFile');
+            const file = fileInput.files[0];
+    
+            if (title && file) {
+                const formData = new FormData();
+                formData.append('videoFile', file);
+                formData.append('title', title);
+    
+                try {
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData,
+                    });
+    
+                    if (response.ok) {
+                        alert('Video uploaded successfully');
+                        document.getElementById('videoTitle').value = '';
+                        fileInput.value = '';
+                        fetchVideos();
+                    } else {
+                        alert('Failed to upload video');
+                    }
+                } catch (error) {
+                    alert('An error occurred: ' + error.message);
+                }
+            } else {
+                alert('Please fill in both the title and select a video file.');
+            }
+        }
+    
+        async function fetchVideos() {
+    try {
+        const response = await fetch('/videos');
+
+        // Check if the response is valid JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not valid JSON');
+        }
+
+        const videos = await response.json();
+        const videoContainer = document.getElementById('videoContainer');
+        videoContainer.innerHTML = '<h2>Uploaded Videos</h2>';
+
+        videos.forEach(video => {
+            const videoElement = document.createElement('div');
+            videoElement.className = 'video-item';
+            videoElement.innerHTML = `
+                <h3>${video.title}</h3>
+                <video controls>
+                    <source src="/${video.filePath}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            `;
+            videoContainer.appendChild(videoElement);
+        });
+    } catch (error) {
+        console.error('Error fetching videos:', error);
+        alert('Error fetching videos: ' + error.message);
+    }
+}
+    
+        // Fetch videos when the page loads
+        window.onload = fetchVideos;
+    </script>
+</body>
+</html>

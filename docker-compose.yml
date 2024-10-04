@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  # Definieer de Node.js-app service
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/blog
+    depends_on:
+      - mongo
+    volumes:
+      - .:/usr/src/app
+    networks:
+      - blog-network
+
+  # Definieer de MongoDB service
+  mongo:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - blog-network
+
+# Netwerken definiëren
+networks:
+  blog-network:
+
+# Persistentie voor MongoDB-data
+volumes:
+  mongo-data:
